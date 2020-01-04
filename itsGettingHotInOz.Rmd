@@ -87,23 +87,51 @@ data <- fetchHistoricRainTemperatureData(latBeg=-28, latEnd=-37, lonBeg=153, lon
 # Looking at the past 50 years for the month of December
 years <- seq(1970, 2019)
 nYears <- length(years)
+
 dec_max_max_temp <- rep(NA, nYears)
 dec_avg_max_temp <- rep(NA, nYears)
 dec_rain <- rep(NA, nYears)
+
+jan_max_max_temp <- rep(NA, nYears)
+jan_avg_max_temp <- rep(NA, nYears)
+jan_rain <- rep(NA, nYears)
+
+feb_max_max_temp <- rep(NA, nYears)
+feb_avg_max_temp <- rep(NA, nYears)
+feb_rain <- rep(NA, nYears)
+
 i <- 1
 for (y in years) {
-  df <- get_monthly_stats(data=data, yr=y, mo=12)
-  dec_max_max_temp[i] <- max(df$max_max_temp)
-  dec_avg_max_temp[i] <- mean(df$avg_max_temp)
-  dec_rain[i] <- mean(df$total_rain)
+  
+  dec <- get_monthly_stats(data=data, yr=y, mo=12)
+  dec_max_max_temp[i] <- max(dec$max_max_temp)
+  dec_avg_max_temp[i] <- mean(dec$avg_max_temp)
+  dec_rain[i] <- mean(dec$total_rain)
+  
+  jan <- get_monthly_stats(data=data, yr=y, mo=1)
+  jan_max_max_temp[i] <- max(jan$max_max_temp)
+  jan_avg_max_temp[i] <- mean(jan$avg_max_temp)
+  jan_rain[i] <- mean(jan$total_rain)
+  
+  feb <- get_monthly_stats(data=data, yr=y, mo=1)
+  feb_max_max_temp[i] <- max(feb$max_max_temp)
+  feb_avg_max_temp[i] <- mean(feb$avg_max_temp)
+  feb_rain[i] <- mean(feb$total_rain)
+
   i <- i + 1
 }
+df <- data.frame(year=years, 
+                 dec_max_max_temp=dec_max_max_temp, 
+                 jan_max_max_temp=jan_max_max_temp,
+                 feb_max_max_temp=feb_max_max_temp)
+```
+```{r}
+library(ggplot2)
 # the plots could be improved
-plot(years, dec_max_max_temp)
-plot(years, dec_avg_max_temp)
-plot(years, dec_rain)
-# need to run a regression on the lines
-# ....
+ggplot(df, aes(x=year, y=dec_max_max_temp)) + geom_point() + geom_smooth(method=lm)
+ggplot(df, aes(x=year, y=jan_max_max_temp)) + geom_point() + geom_smooth(method=lm)
+ggplot(df, aes(x=year, y=feb_max_max_temp)) + geom_point() + geom_smooth(method=lm)
+
 ```
 
 
