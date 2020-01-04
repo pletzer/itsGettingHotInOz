@@ -98,9 +98,12 @@ for (y in years) {
   dec_rain[i] <- mean(df$total_rain)
   i <- i + 1
 }
+# the plots could be improved
 plot(years, dec_max_max_temp)
 plot(years, dec_avg_max_temp)
 plot(years, dec_rain)
+# need to run a regression on the lines
+# ....
 ```
 
 
