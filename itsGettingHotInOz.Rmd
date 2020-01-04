@@ -1,0 +1,102 @@
+---
+title: "It's getting hot in South East Australia"
+output: html_notebook
+---
+
+```{r}
+library(bomrang)
+```
+
+```{r}
+fetchHistoricRainTemperatureData <- function(latBeg, latEnd, lonBeg, lonEnd, nVals) {
+  # Fetch historical climate data (max daily temperature and rain) along a transect
+  # from the Australian Bureau of Meteorology
+  #
+  # @param latBeg start latitude
+  # @param latEnd end latitude
+  # @param lonBeg start longitude
+  # @param lonEnd end longitude
+  # @param nVals number of points along the transect
+  # @return a list of list of data frames, eg. result[['rain']][['2']] for the third 
+  # observation point.
+  # @note the nearest obeservation point to the selected lat, lon location is chosen
+  
+  rain <- list()
+  max_temp <- list()
+  dLat <- (latEnd - latBeg) / (nVals - 1)
+  dLon <- (lonEnd - lonBeg) / (nVals - 1)
+  for (i in seq(0, nVals - 1)) {
+    lat <- latBeg + i * dLat
+    lon <- lonBeg + i * dLon
+    location <- c(lat, lon) 
+    max_tempDf <- get_historical(latlon=location, type='max')
+    iS <- toString(i)
+    rain[[iS]] <- get_historical(latlon=location, type='rain') %>%
+                  select(-c('product_code'))
+                  
+    max_temp[[iS]] <- get_historical(latlon=location, type='max')  %>%
+                  select(-c('product_code'))
+  }
+  
+  return(list(rain=rain, max_temp=max_temp))
+}
+```
+
+```{r}
+get_monthly_stats <- function(data, yr, mo) {
+  # Get monthly statistics for a given year and month
+  #
+  # @param data object returned by fetchHistoricRainTemperatureData
+  # @param yr year
+  # @param mo month
+  # @return a data.frame with station number, total rain for the month, the max recorded temperature
+  #         and the average daily max temperature 
+  
+  nVals <- length(data[['rain']])
+  station_numbers <- rep(NA, nVals)
+  total_rain <- rep(NA, nVals)
+  max_max_temps <- rep(NA, nVals)
+  avg_max_temps <- rep(NA, nVals)
+  for (i in seq(0, nVals - 1)) {
+    i1 <- i + 1
+    iS <- toString(i)
+    
+    rainDf <- data[['rain']][[iS]] %>% filter(year==yr, month==mo, !is.na(rainfall))
+    total_rain[i1] <- sum(rainDf$rainfall)
+    
+    maxTempDf <- data[['max_temp']][[iS]] %>% filter(year==yr, month==mo, !is.na(max_temperature))
+    avg_max_temps[i1] <- mean(maxTempDf$max_temperature)
+    max_max_temps[i1] <- max(maxTempDf$max_temperature)
+    
+    station_numbers[i1] <- rainDf$station_number[1]
+  }
+  df <- data.frame(station_number=station_numbers, total_rain=total_rain, max_max_temp=max_max_temps, avg_max_temp=avg_max_temps)
+  return(df %>% filter(!is.na(station_number)))
+}
+```
+```{r}
+# Example: transect starting south of Brisbane and ending somewhere in Victoria
+data <- fetchHistoricRainTemperatureData(latBeg=-28, latEnd=-37, lonBeg=153, lonEnd=149, nVals=11)
+```
+
+```{r}
+# Looking at the past 50 years for the month of December
+years <- seq(1970, 2019)
+nYears <- length(years)
+dec_max_max_temp <- rep(NA, nYears)
+dec_avg_max_temp <- rep(NA, nYears)
+dec_rain <- rep(NA, nYears)
+i <- 1
+for (y in years) {
+  df <- get_monthly_stats(data=data, yr=y, mo=12)
+  dec_max_max_temp[i] <- max(df$max_max_temp)
+  dec_avg_max_temp[i] <- mean(df$avg_max_temp)
+  dec_rain[i] <- mean(df$total_rain)
+  i <- i + 1
+}
+plot(years, dec_max_max_temp)
+plot(years, dec_avg_max_temp)
+plot(years, dec_rain)
+```
+
+
