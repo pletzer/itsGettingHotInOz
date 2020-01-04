@@ -4,13 +4,15 @@ output: html_notebook
 ---
 
 ```{r}
+# may need tp install bomrang, if so then uncomment
+#install.packages('bomrang')
 library(bomrang)
 ```
 
 ```{r}
 fetchHistoricRainTemperatureData <- function(latBeg, latEnd, lonBeg, lonEnd, nVals) {
   # Fetch historical climate data (max daily temperature and rain) along a transect
-  # from the Australian Bureau of Meteorology
+  # Data are from the Australian Bureau of Meteorology.
   #
   # @param latBeg start latitude
   # @param latEnd end latitude
@@ -46,7 +48,8 @@ fetchHistoricRainTemperatureData <- function(latBeg, latEnd, lonBeg, lonEnd, nVa
 get_monthly_stats <- function(data, yr, mo) {
   # Get monthly statistics for a given year and month
   #
-  # @param data object returned by fetchHistoricRainTemperatureData
+  # @param data object returned by fetchHistoricRainTemperatureData. You need to retrieve the 
+  #             data first!
   # @param yr year
   # @param mo month
   # @return a data.frame with station number, total rain for the month, the max recorded temperature
@@ -76,6 +79,7 @@ get_monthly_stats <- function(data, yr, mo) {
 ```
 ```{r}
 # Example: transect starting south of Brisbane and ending somewhere in Victoria
+# increasing the number of values causes issues woth one bom station
 data <- fetchHistoricRainTemperatureData(latBeg=-28, latEnd=-37, lonBeg=153, lonEnd=149, nVals=11)
 ```
 
