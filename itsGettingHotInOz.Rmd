@@ -145,9 +145,14 @@ df <- data.frame(year=years,
 ```
 ```{r}
 library(ggplot2)
+
 ggplot(df, aes(x=year, y=dec_avg_max_temp)) + geom_point() + geom_smooth(method=lm) 
 ggplot(df, aes(x=year, y=jan_avg_max_temp)) + geom_point() + geom_smooth(method=lm) 
 ggplot(df, aes(x=year, y=feb_avg_max_temp)) + geom_point() + geom_smooth(method=lm)
+
+ggplot(df, aes(x=year, y=dec_max_max_temp)) + geom_point() + geom_smooth(method=lm) 
+ggplot(df, aes(x=year, y=jan_max_max_temp)) + geom_point() + geom_smooth(method=lm) 
+ggplot(df, aes(x=year, y=feb_max_max_temp)) + geom_point() + geom_smooth(method=lm)
 
 ggplot(df, aes(x=year, y=dec_rain)) + geom_point() + geom_smooth(method=lm) 
 ggplot(df, aes(x=year, y=jan_rain)) + geom_point() + geom_smooth(method=lm) 
