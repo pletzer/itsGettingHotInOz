@@ -79,8 +79,26 @@ get_monthly_stats <- function(data, yr, mo) {
 ```
 ```{r}
 # Example: transect starting south of Brisbane and ending somewhere in Victoria
-# increasing the number of values causes issues woth one bom station
-data <- fetchHistoricRainTemperatureData(latBeg=-28, latEnd=-37, lonBeg=153, lonEnd=149, nVals=11)
+library(ggmap)
+
+latBeg <- -28
+latEnd <- -37.5
+
+lonBeg <- 153
+lonEnd <- 149
+
+begEnd <- data.frame(
+  lat = c(latBeg, latEnd),
+  lon = c(lonBeg, lonEnd),
+  stringsAsFactors = FALSE
+)
+oz <- c(left=112, bottom=-44, right=156, top=-10)
+p1 <- get_stamenmap(oz, zoom=4, maptype='watercolor') %>% ggmap() + geom_point(data = begEnd, aes(x = lon, y = lat), color = "black", size = 2)
+p1 + geom_line(data = begEnd, aes(x = lon, y = lat), color = "black", size = 0.5)
+  
+```
+```{r}
+data <- fetchHistoricRainTemperatureData(latBeg=latBeg, latEnd=latEnd, lonBeg=lonBeg, lonEnd=lonEnd, nVals=21)
 ```
 
 ```{r}
@@ -113,7 +131,7 @@ for (y in years) {
   jan_avg_max_temp[i] <- mean(jan$avg_max_temp)
   jan_rain[i] <- mean(jan$total_rain)
   
-  feb <- get_monthly_stats(data=data, yr=y, mo=1)
+  feb <- get_monthly_stats(data=data, yr=y, mo=2)
   feb_max_max_temp[i] <- max(feb$max_max_temp)
   feb_avg_max_temp[i] <- mean(feb$avg_max_temp)
   feb_rain[i] <- mean(feb$total_rain)
@@ -127,10 +145,13 @@ df <- data.frame(year=years,
 ```
 ```{r}
 library(ggplot2)
-# the plots could be improved
-ggplot(df, aes(x=year, y=dec_max_max_temp)) + geom_point() + geom_smooth(method=lm)
-ggplot(df, aes(x=year, y=jan_max_max_temp)) + geom_point() + geom_smooth(method=lm)
-ggplot(df, aes(x=year, y=feb_max_max_temp)) + geom_point() + geom_smooth(method=lm)
+ggplot(df, aes(x=year, y=dec_avg_max_temp)) + geom_point() + geom_smooth(method=lm) 
+ggplot(df, aes(x=year, y=jan_avg_max_temp)) + geom_point() + geom_smooth(method=lm) 
+ggplot(df, aes(x=year, y=feb_avg_max_temp)) + geom_point() + geom_smooth(method=lm)
+
+ggplot(df, aes(x=year, y=dec_rain)) + geom_point() + geom_smooth(method=lm) 
+ggplot(df, aes(x=year, y=jan_rain)) + geom_point() + geom_smooth(method=lm) 
+ggplot(df, aes(x=year, y=feb_rain)) + geom_point() + geom_smooth(method=lm)
 
 ```
 
