@@ -1,0 +1,109 @@
+---
+title: "It's getting hot in South East Australia"
+output: html_notebook
+---
+
+```{r}
+# may need tp install bomrang, if so then uncomment
+#install.packages('bomrang')
+library(bomrang)
+library(ggmap)
+
+stationid <- 072043 # Turumba
+```
+
+```{r}
+fetchHistoricRainTemperatureData <- function(sid) {
+  # Fetch historical climate data (max daily temperature and rain) from a given station Id
+  # Data are from the Australian Bureau of Meteorology.
+  #
+  # @param sid station Id
+  # @return a list of list of data frames, eg. result[['rain']], result[['max_temp']]
+
+  res <- list()
+  res$rain <- get_historical(stationid=sid, type='rain')
+  res$max_temp <- get_historical(stationid=sid, type='max')
+
+  return(res)
+}
+```
+
+```{r}
+get_monthly_stats <- function(data, mo) {
+  # Get monthly statistics for a given year and month
+  #
+  # @param data object returned by fetchHistoricRainTemperatureData. You need to retrieve the 
+  #             data first!
+  # @param mo month 
+  # @return a data.frame with total rain for the month across years, 
+  #                      the average daily max temperature for each month and 
+  #                      the maximum daily max temperature across the month
+  
+  
+  rain <- data$rain %>% filter(month == mo, quality == 'Y')
+  minYear <- min(rain$year)
+  maxYear <- max(rain$year)
+  nYear <- maxYear - minYear + 1
+  rain_years <- rep(NA, nYear)
+  total_rain <- rep(NA, nYear)
+  i <- 1
+  for (y in seq(minYear, maxYear)) {
+    rain_years[i] <- y
+    rain_tbl <- rain %>% filter(year == y)
+    total_rain[i] <- sum(rain_tbl$rainfall)
+    i <- i + 1
+  }
+  
+  max_temp <- data$max_temp %>% filter(month == mo)
+  minYear <- min(max_temp$year)
+  maxYear <- max(max_temp$year)
+  nYear <- maxYear - minYear + 1
+  temp_years <- rep(NA, nYear)
+  avg_max_temp <- rep(NA, nYear)
+  max_max_temp <- rep(NA, nYear)
+  i <- 1
+  for (y in seq(minYear, maxYear)) {
+    temp_years[i] <- y
+    temp_tbl <- max_temp %>% filter(year == y)
+    avg_max_temp[i] <- mean(temp_tbl$max_temperature)
+    max_max_temp[i] <- max(temp_tbl$max_temperature)
+    i <- i + 1
+  }
+  
+  res <- list()
+  res$rain <- data.frame(year=rain_years, total_rain=total_rain)
+  res$temp <- data.frame(year=temp_years, avg_max_temp=avg_max_temp, max_max_temp=max_max_temp)
+
+  return(res)
+}
+```
+
+```{r}
+# Fetch the rain/temperature data
+data <- fetchHistoricRainTemperatureData(sid=stationid)
+```
+
+```{r}
+library(ggplot2)
+
+monthNames <- c('Jan', 'Feb', 'Mar', 
+                'Apr', 'May', 'Jun', 
+                'Jul', 'Aug', 'Sep', 
+                'Oct', 'Nov', 'Dec')
+  
+# Rain data
+for (m in c(12, 1, 2)) {
+  moName <- monthNames[m]
+  d <- get_monthly_stats(data, mo=m)
+  r <- d$rain
+  t <- d$temp
+  # plot the rain data
+  #print(ggplot(r, aes(x=year,y=total_rain)) + geom_point() + geom_smooth(method=lm) + ggtitle(sprintf('%s', moName)))
+  #print(ggplot(t, aes(x=year, y=avg_max_temp)) + geom_point() + geom_smooth(method=lm) + ggtitle(sprintf('%s', moName)))
+  print(ggplot(t, aes(x=year, y=max_max_temp)) + geom_point() + geom_smooth(method=lm) + ggtitle(sprintf('%s', moName)))
+}
+
+```
+
+
+
