@@ -5,8 +5,28 @@ output: html_notebook
 
 ```{r}
 # from minYear to now
-minYear <- 1980
+minYear <- 2000
 maxYear <- 2019
+
+pts <- c(-35.9, 136.6,
+        -35.3, 147.4,
+        -35.9, 150.1,
+        -33.9, 150.5,
+        -32.5, 150.2,
+        -30.0, 151.0,
+        -29.4, 152.0)
+latlons <- as.data.frame(matrix(pts, ncol=2, byrow=TRUE))
+colnames(latlons) <- c('lat', 'lon')
+```
+```{r}
+# Show the points
+library(ggmap)
+
+oz <- c(left=112, bottom=-44, right=156, top=-10)
+p1 <- get_stamenmap(oz, zoom=4, maptype='watercolor') %>% ggmap() + geom_point(data = begEnd, aes(x = lon, y = lat), color = "black", size = 2)
+
+p1 + geom_point(data = latlons, aes(x = lon, y = lat), color = "black", size = 0.5)
+  
 ```
 
 ```{r}
@@ -16,15 +36,11 @@ library(bomrang)
 ```
 
 ```{r}
-fetchHistoricRainTemperatureData <- function(latBeg, latEnd, lonBeg, lonEnd, nVals, minYear) {
+fetchHistoricRainTemperatureData <- function(latlons, minYear) {
   # Fetch historical climate data (max daily temperature and rain) along a transect
   # Data are from the Australian Bureau of Meteorology.
   #
-  # @param latBeg start latitude
-  # @param latEnd end latitude
-  # @param lonBeg start longitude
-  # @param lonEnd end longitude
-  # @param nVals number of points along the transect
+  # @param latlons lat/lon tuples
   # @return a list of list of data frames, eg. result[['rain']][[index]]
   # @note the observation point that is nearest to the selected lat, lon location is chosen
   
@@ -32,17 +48,14 @@ fetchHistoricRainTemperatureData <- function(latBeg, latEnd, lonBeg, lonEnd, nVa
   res$rain <- list()
   res$max_temp <- list()
 
-  # lat/lon increments
-  dLat <- (latEnd - latBeg) / (nVals - 1)
-  dLon <- (lonEnd - lonBeg) / (nVals - 1)
+  npts <- nrow(latlons)
   
+  # iterate over the points
   countValid <- 0
-  
-  # iterate over the points along the transect
-  for (i in seq(0, nVals - 1)) {
+  for (i in seq(1, npts)) {
     
-    lat <- latBeg + i * dLat
-    lon <- lonBeg + i * dLon
+    lat <- latlons$lat[i]
+    lon <- latlons$lon[i]
     location <- c(lat, lon)
     
     #
@@ -123,30 +136,10 @@ get_monthly_stats <- function(data, yr, mo) {
                      avg_max_temp=avg_max_temps) )
 }
 ```
-```{r}
-# Example: transect starting south of Brisbane and ending somewhere in Victoria
-library(ggmap)
 
-latBeg <- -32
-latEnd <- -37.5
-
-lonBeg <- 150
-lonEnd <- 148
-
-begEnd <- data.frame(
-  lat = c(latBeg, latEnd),
-  lon = c(lonBeg, lonEnd),
-  stringsAsFactors = FALSE
-)
-oz <- c(left=112, bottom=-44, right=156, top=-10)
-p1 <- get_stamenmap(oz, zoom=4, maptype='watercolor') %>% ggmap() + geom_point(data = begEnd, aes(x = lon, y = lat), color = "black", size = 2)
-p1 + geom_line(data = begEnd, aes(x = lon, y = lat), color = "black", size = 0.5)
-  
-```
 ```{r}
 # Beware that increasing nVals can give you an error - some stations don't have data
-data <- fetchHistoricRainTemperatureData(latBeg=latBeg, latEnd=latEnd, lonBeg=lonBeg, lonEnd=lonEnd, 
-                                         nVals=11, minYear=minYear - 1) # want recordings to start the previous year
+data <- fetchHistoricRainTemperatureData(latlons, minYear=minYear - 1) # want recordings to start the previous year
 ```
 
 ```{r}
@@ -206,13 +199,13 @@ ggplot(df, aes(x=year, y=dec_rain)) + geom_point() + geom_smooth(method=lm)
 ggplot(df, aes(x=year, y=jan_rain)) + geom_point() + geom_smooth(method=lm) 
 ggplot(df, aes(x=year, y=feb_rain)) + geom_point() + geom_smooth(method=lm)
 
-ggplot(df, aes(x=year, y=dec_avg_max_temp)) + geom_point() #+ geom_smooth(method=lm) 
-ggplot(df, aes(x=year, y=jan_avg_max_temp)) + geom_point() #+ geom_smooth(method=lm) 
-ggplot(df, aes(x=year, y=feb_avg_max_temp)) + geom_point() #+ geom_smooth(method=lm)
+ggplot(df, aes(x=year, y=dec_avg_max_temp)) + geom_point() + geom_smooth(method=lm) 
+ggplot(df, aes(x=year, y=jan_avg_max_temp)) + geom_point() + geom_smooth(method=lm) 
+ggplot(df, aes(x=year, y=feb_avg_max_temp)) + geom_point() + geom_smooth(method=lm)
 
-ggplot(df, aes(x=year, y=dec_anomaly_max_temp)) + geom_point() #+ geom_smooth(method=lm) 
-ggplot(df, aes(x=year, y=jan_anomaly_max_temp)) + geom_point() #+ geom_smooth(method=lm) 
-ggplot(df, aes(x=year, y=feb_anomaly_max_temp)) + geom_point() #+ geom_smooth(method=lm)
+ggplot(df, aes(x=year, y=dec_anomaly_max_temp)) + geom_point() + geom_smooth(method=lm) 
+ggplot(df, aes(x=year, y=jan_anomaly_max_temp)) + geom_point() + geom_smooth(method=lm) 
+ggplot(df, aes(x=year, y=feb_anomaly_max_temp)) + geom_point() + geom_smooth(method=lm)
 
 
 ```
